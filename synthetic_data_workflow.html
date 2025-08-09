@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synthetic Data Generation Platform</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8fafc;
+            color: #64748b;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #f1f5f9;
+        }
+
+        /* Progress Tracking */
+        .progress-container {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 1.5rem;
+            left: 1.5rem;
+            right: 1.5rem;
+            height: 2px;
+            background: #e2e8f0;
+            z-index: 1;
+        }
+
+        .progress-line {
+            position: absolute;
+            top: 1.5rem;
+            left: 1.5rem;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            z-index: 2;
+            width: 0;
+            transition: width 1s ease;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 3;
+        }
+
+        .step-circle {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            transition: all 0.5s ease;
+            margin-bottom: 0.5rem;
+        }
+
+        .step.active .step-circle {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .step.completed .step-circle {
+            background: #10b981;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.875rem;
+            text-align: center;
+            color: #64748b;
+            max-width: 120px;
+        }
+
+        .step.active .step-label {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .progress-details {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .progress-details h3 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        /* History Table */
+        .history-table {
+            overflow-x: auto;
+        }
+
+        .history-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .history-table th,
+        .history-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .history-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .history-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-completed {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-processing {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Results Section */
+        .results-section {
+            display: none;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .download-card {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .download-card h3 {
+            margin-bottom: 1rem;
+        }
+
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .file-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-tabs {
+                gap: 1rem;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .progress-steps {
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+            
+            .progress-steps::before {
+                display: none;
+            }
+        }
+
+        .spinning {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        .columns-container {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            background: #f8fafc;
+        }
+
+        .column-item {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+            align-items: center;
+        }
+
+        .column-item input {
+            flex: 1;
+            margin: 0;
+            padding: 0.5rem;
+        }
+
+        .column-item select {
+            width: 120px;
+            margin: 0;
+            padding: 0.5rem;
+        }
+
+        .add-column-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        .remove-column-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo"><i class="fas fa-database"></i> Synthetic Data Platform</div>
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="showPage('generator')">Generador</button>
+                <button class="nav-tab" onclick="showPage('history')">Historial</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Generator Page -->
+        <div id="generator" class="page active">
+            <div class="card">
+                <h2 style="margin-bottom: 2rem; color: #667eea;"><i class="fas fa-clipboard-list"></i> Configuración del Proyecto</h2>
+                
+                <form id="dataForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="projectName">Nombre del Proyecto</label>
+                            <input type="text" id="projectName" placeholder="Ej: Análisis de Satisfacción Empleados" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="domain">Dominio/Industria</label>
+                            <select id="domain" required>
+                                <option value="">Seleccionar dominio</option>
+                                <option value="hr">Recursos Humanos</option>
+                                <option value="finance">Finanzas</option>
+                                <option value="healthcare">Salud</option>
+                                <option value="retail">Retail</option>
+                                <option value="technology">Tecnología</option>
+                                <option value="manufacturing">Manufactura</option>
+                                <option value="education">Educación</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="module">Módulo/Caso de Uso</label>
+                            <input type="text" id="module" placeholder="Ej: Encuestas de Empleados" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dataVolume">Volumen de Datos</label>
+                            <input type="number" id="dataVolume" placeholder="1000" min="1" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="timePeriod">Período de Tiempo</label>
+                            <input type="text" id="timePeriod" placeholder="Ej: 2024-2025">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="country">País/Región</label>
+                            <select id="country">
+                                <option value="">Seleccionar país</option>
+                                <option value="peru">Perú</option>
+                                <option value="colombia">Colombia</option>
+                                <option value="mexico">México</option>
+                                <option value="chile">Chile</option>
+                                <option value="argentina">Argentina</option>
+                                <option value="usa">Estados Unidos</option>
+                                <option value="spain">España</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 2rem;">
+                        <label for="description">Descripción del Proyecto</label>
+                        <textarea id="description" rows="4" placeholder="Describe el contexto y propósito de los datos sintéticos que necesitas generar..."></textarea>
+                    </div>
+
+                    <h3 style="color: #667eea; margin-bottom: 1rem;"><i class="fas fa-columns"></i> Definición de Columnas</h3>
+                    <div class="columns-container">
+                        <div id="columnsContainer">
+                            <div class="column-item">
+                                <input type="text" placeholder="Nombre de la columna" class="column-name">
+                                <select class="column-type">
+                                    <option value="text">Texto</option>
+                                    <option value="number">Número</option>
+                                    <option value="date">Fecha</option>
+                                    <option value="boolean">Booleano</option>
+                                    <option value="email">Email</option>
+                                    <option value="category">Categoría</option>
+                                </select>
+                                <input type="text" placeholder="Descripción/Reglas" class="column-rules">
+                                <button type="button" class="remove-column-btn" onclick="removeColumn(this)">×</button>
+                            </div>
+                        </div>
+                        <button type="button" class="add-column-btn" onclick="addColumn()">+ Agregar Columna</button>
+                    </div>
+
+                    <h3 style="color: #667eea; margin: 2rem 0 1rem 0;"><i class="fas fa-business-time"></i> Reglas de Negocio</h3>
+                    <div class="form-group">
+                        <label for="businessRules">Reglas de Negocio (Opcional)</label>
+                        <textarea id="businessRules" rows="4" placeholder="Describe las reglas condicionales, correlaciones y restricciones específicas que deben aplicar a los datos..."></textarea>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-magic"></i> Generar Datos Sintéticos
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Progress Container -->
+            <div id="progressContainer" class="progress-container">
+                <h2 style="color: #667eea; margin-bottom: 2rem;"><i class="fas fa-rocket"></i> Generando Datos Sintéticos</h2>
+                
+                <div class="progress-steps">
+                    <div class="progress-line" id="progressLine"></div>
+                    
+                    <div class="step" id="step1">
+                        <div class="step-circle">1</div>
+                        <div class="step-label">Procesando Formulario</div>
+                    </div>
+                    
+                    <div class="step" id="step2">
+                        <div class="step-circle">2</div>
+                        <div class="step-label">Generando Prompt</div>
+                    </div>
+                    
+                    <div class="step" id="step3">
+                        <div class="step-circle">3</div>
+                        <div class="step-label">Creando Script Python</div>
+                    </div>
+                    
+                    <div class="step" id="step4">
+                        <div class="step-circle">4</div>
+                        <div class="step-label">Instalando Requisitos</div>
+                    </div>
+                    
+                    <div class="step" id="step5">
+                        <div class="step-circle">5</div>
+                        <div class="step-label">Ejecutando Script</div>
+                    </div>
+                    
+                    <div class="step" id="step6">
+                        <div class="step-circle">6</div>
+                        <div class="step-label">Generando Datos</div>
+                    </div>
+                </div>
+
+                <div class="progress-details" id="progressDetails">
+                    <h3>Iniciando proceso...</h3>
+                    <p>Preparando el sistema para generar sus datos sintéticos.</p>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" class="results-section">
+                <div class="download-card">
+                    <h3>🎉 ¡Datos Sintéticos Generados Exitosamente!</h3>
+                    <p>Su proyecto ha sido completado. Los archivos están listos para descarga.</p>
+                    
+                    <div class="file-list" id="fileList">
+                        <!-- Files will be populated here -->
+                    </div>
+                    
+                    <div style="margin-top: 2rem;">
+                        <button class="btn btn-primary" onclick="downloadAll()">
+                            <i class="fas fa-download"></i> Descargar Todo (ZIP)
+                        </button>
+                        <button class="btn btn-secondary" onclick="resetForm()" style="margin-left: 1rem;">
+                            <i class="fas fa-plus"></i> Nuevo Proyecto
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Page -->
+        <div id="history" class="page">
+            <div class="card">
+                <h2 style="margin-bottom: 2rem; color: #667eea;"><i class="fas fa-history"></i> Historial de Proyectos</h2>
+                
+                <div class="history-table">
+                    <table id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>Proyecto</th>
+                                <th>Dominio</th>
+                                <th>Fecha</th>
+                                <th>Registros</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- History items will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Modal -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+            <div id="modalContent">
+                <!-- Modal content will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentProject = null;
+        let projectHistory = JSON.parse(localStorage.getItem('projectHistory') || '[]');
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHistory();
+        });
+
+        function showPage(page) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            
+            // Show selected page
+            document.getElementById(page).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (page === 'history') {
+                loadHistory();
+            }
+        }
+
+        function addColumn() {
+            const container = document.getElementById('columnsContainer');
+            const columnHtml = `
+                <div class="column-item">
+                    <input type="text" placeholder="Nombre de la columna" class="column-name">
+                    <select class="column-type">
+                        <option value="text">Texto</option>
+                        <option value="number">Número</option>
+                        <option value="date">Fecha</option>
+                        <option value="boolean">Booleano</option>
+                        <option value="email">Email</option>
+                        <option value="category">Categoría</option>
+                    </select>
+                    <input type="text" placeholder="Descripción/Reglas" class="column-rules">
+                    <button type="button" class="remove-column-btn" onclick="removeColumn(this)">×</button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', columnHtml);
+        }
+
+        function removeColumn(button) {
+            const columnItems = document.querySelectorAll('.column-item');
+            if (columnItems.length > 1) {
+                button.closest('.column-item').remove();
+            }
+        }
+
+        // Form submission
+        document.getElementById('dataForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Collect form data
+            const formData = {
+                id: Date.now(),
+                projectName: document.getElementById('projectName').value,
+                domain: document.getElementById('domain').value,
+                module: document.getElementById('module').value,
+                dataVolume: document.getElementById('dataVolume').value,
+                timePeriod: document.getElementById('timePeriod').value,
+                country: document.getElementById('country').value,
+                description: document.getElementById('description').value,
+                businessRules: document.getElementById('businessRules').value,
+                columns: [],
+                timestamp: new Date().toISOString(),
+                status: 'processing'
+            };
+            
+            // Collect columns
+            const columnItems = document.querySelectorAll('.column-item');
+            columnItems.forEach(item => {
+                const name = item.querySelector('.column-name').value;
+                const type = item.querySelector('.column-type').value;
+                const rules = item.querySelector('.column-rules').value;
+                
+                if (name.trim()) {
+                    formData.columns.push({
+                        name: name.trim(),
+                        type: type,
+                        rules: rules.trim()
+                    });
+                }
+            });
+            
+            currentProject = formData;
+            
+            // Hide form and show progress
+            document.querySelector('#generator .card').style.display = 'none';
+            document.getElementById('progressContainer').classList.add('active');
+            
+            // Start processing simulation
+            startProcessing();
+        });
+
+        function startProcessing() {
+            const steps = [
+                {
+                    title: "Procesando formulario...",
+                    description: "Validando datos de entrada y configuración del proyecto."
+                },
+                {
+                    title: "Generando prompt para IA...",
+                    description: "Creando prompt estructurado con las especificaciones del usuario."
+                },
+                {
+                    title: "Creando script Python...",
+                    description: "La IA está generando el código Python para crear los datos sintéticos."
+                },
+                {
+                    title: "Instalando dependencias...",
+                    description: "Instalando librerías necesarias desde requirements.txt."
+                },
+                {
+                    title: "Ejecutando script...",
+                    description: "Ejecutando el script Python generado en el ambiente de producción."
+                },
+                {
+                    title: "Generando datos sintéticos...",
+                    description: "Creando archivos CSV con los datos sintéticos según especificaciones."
+                }
+            ];
+            
+            let currentStep = 0;
+            
+            function processStep() {
+                if (currentStep < steps.length) {
+                    // Update current step
+                    const stepElement = document.getElementById(`step${currentStep + 1}`);
+                    stepElement.classList.add('active');
+                    
+                    // Update progress line
+                    const progressLine = document.getElementById('progressLine');
+                    const progressPercent = ((currentStep + 1) / steps.length) * 100;
+                    progressLine.style.width = `calc(${progressPercent}% - 3rem)`;
+                    
+                    // Update details
+                    const detailsElement = document.getElementById('progressDetails');
+                    detailsElement.innerHTML = `
+                        <h3>${steps[currentStep].title}</h3>
+                        <p>${steps[currentStep].description}</p>
+                    `;
+                    
+                    // Complete previous steps
+                    for (let i = 0; i < currentStep; i++) {
+                        document.getElementById(`step${i + 1}`).classList.remove('active');
+                        document.getElementById(`step${i + 1}`).classList.add('completed');
+                    }
+                    
+                    currentStep++;
+                    
+                    // Continue to next step after delay
+                    setTimeout(processStep, Math.random() * 2000 + 2000); // 2-4 seconds
+                } else {
+                    // Complete processing
+                    completeProcessing();
+                }
+            }
+            
+            processStep();
+        }
+
+        function completeProcessing() {
+            // Mark all steps as completed
+            for (let i = 1; i <= 6; i++) {
+                const step = document.getElementById(`step${i}`);
+                step.classList.remove('active');
+                step.classList.add('completed');
+            }
+            
+            // Complete progress line
+            document.getElementById('progressLine').style.width = 'calc(100% - 3rem)';
+            
+            // Update details
+            document.getElementById('progressDetails').innerHTML = `
+                <h3>🎉 ¡Proceso completado exitosamente!</h3>
+                <p>Los datos sintéticos han sido generados y están listos para descarga.</p>
+            `;
+            
+            // Update project status
+            currentProject.status = 'completed';
+            currentProject.completedAt = new Date().toISOString();
+            
+            // Generate mock files
+            currentProject.files = generateMockFiles();
+            
+            // Save to history
+            projectHistory.unshift(currentProject);
+            localStorage.setItem('projectHistory', JSON.stringify(projectHistory));
+            
+            // Show results after a delay
+            setTimeout(() => {
+                document.getElementById('progressContainer').classList.remove('active');
+                document.getElementById('resultsSection').classList.add('active');
+                populateFileList();
+            }, 2000);
+        }
+
+        function generateMockFiles() {
+            const files = [];
+            const baseFileName = currentProject.projectName.toLowerCase().replace(/\s+/g, '_');
+            
+            // Add main data file
+            files.push({
+                name: `${baseFileName}_data.csv`,
+                type: 'CSV Data',
+                size: `${Math.floor(Math.random() * 500 + 100)} KB`
+            });
+            
+            // Add additional files if high volume
+            if (parseInt(currentProject.dataVolume) > 1000) {
+                files.push({
+                    name: `${baseFileName}_additional.csv`,
+                    type: 'CSV Data',
+                    size: `${Math.floor(Math.random() * 300 + 50)} KB`
+                });
+            }
+            
+            // Add metadata and documentation
+            files.push({
+                name: `${baseFileName}_metadata.json`,
+                type: 'Metadata',
+                size: `${Math.floor(Math.random() * 10 + 5)} KB`
+            });
+            
+            files.push({
+                name: `${baseFileName}_script.py`,
+                type: 'Python Script',
+                size: `${Math.floor(Math.random() * 20 + 10)} KB`
+            });
+            
+            files.push({
+                name: 'requirements.txt',
+                type: 'Requirements',
+                size: '2 KB'
+            });
+            
+            return files;
+        }
+
+        function populateFileList() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+            
+            currentProject.files.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div>
+                        <div style="font-weight: 600;">${file.name}</div>
+                        <div style="font-size: 0.875rem; opacity: 0.8;">${file.type} - ${file.size}</div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="downloadFile('${file.name}')" style="padding: 0.5rem 1rem;">
+                        <i class="fas fa-download"></i> Descargar
+                    </button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        function downloadFile(fileName) {
+            // Simulate file download
+            const blob = createMockFile(fileName);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadAll() {
+            // Create a mock ZIP file
+            const zipContent = `# Synthetic Data Package for ${currentProject.projectName}\n\nThis package contains:\n${currentProject.files.map(f => `- ${f.name}`).join('\n')}\n\nGenerated on: ${new Date().toLocaleString()}`;
+            
+            const blob = new Blob([zipContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentProject.projectName.toLowerCase().replace(/\s+/g, '_')}_package.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function createMockFile(fileName) {
+            if (fileName.endsWith('.csv')) {
+                // Generate mock CSV data
+                let csvContent = '';
+                const columns = currentProject.columns.length > 0 ? currentProject.columns : [
+                    { name: 'id', type: 'number' },
+                    { name: 'name', type: 'text' },
+                    { name: 'email', type: 'email' },
+                    { name: 'created_date', type: 'date' }
+                ];
+                
+                // Header
+                csvContent += columns.map(col => col.name).join(',') + '\n';
+                
+                // Generate sample rows
+                const rowCount = Math.min(parseInt(currentProject.dataVolume) || 100, 100);
+                for (let i = 1; i <= rowCount; i++) {
+                    const row = columns.map(col => {
+                        switch (col.type) {
+                            case 'number':
+                                return Math.floor(Math.random() * 1000) + 1;
+                            case 'text':
+                                return `"Sample Text ${i}"`;
+                            case 'email':
+                                return `user${i}@example.com`;
+                            case 'date':
+                                const date = new Date();
+                                date.setDate(date.getDate() - Math.floor(Math.random() * 365));
+                                return date.toISOString().split('T')[0];
+                            case 'boolean':
+                                return Math.random() > 0.5 ? 'true' : 'false';
+                            case 'category':
+                                const categories = ['A', 'B', 'C', 'D'];
+                                return categories[Math.floor(Math.random() * categories.length)];
+                            default:
+                                return `"Value ${i}"`;
+                        }
+                    });
+                    csvContent += row.join(',') + '\n';
+                }
+                return new Blob([csvContent], { type: 'text/csv' });
+                
+            } else if (fileName.endsWith('.py')) {
+                // Generate mock Python script
+                const pythonScript = `#!/usr/bin/env python3
+"""
+Synthetic Data Generator Script
+Project: ${currentProject.projectName}
+Generated: ${new Date().toISOString()}
+"""
+
+import pandas as pd
+import numpy as np
+from faker import Faker
+import random
+from datetime import datetime, timedelta
+
+def generate_synthetic_data():
+    """Generate synthetic data based on project specifications"""
+    fake = Faker()
+    
+    # Configuration
+    num_records = ${currentProject.dataVolume || 1000}
+    
+    # Generate data
+    data = []
+    
+    for i in range(num_records):
+        record = {
+${currentProject.columns.map(col => `            '${col.name}': generate_${col.type}_data(fake, i),`).join('\n')}
+        }
+        data.append(record)
+    
+    # Create DataFrame
+    df = pd.DataFrame(data)
+    
+    # Apply business rules
+    df = apply_business_rules(df)
+    
+    # Save to CSV
+    df.to_csv('${currentProject.projectName.toLowerCase().replace(/\s+/g, '_')}_data.csv', index=False)
+    print(f"Generated {len(df)} records successfully!")
+
+def generate_text_data(fake, index):
+    return fake.name()
+
+def generate_number_data(fake, index):
+    return random.randint(1, 1000)
+
+def generate_date_data(fake, index):
+    return fake.date_between(start_date='-2y', end_date='today')
+
+def generate_boolean_data(fake, index):
+    return random.choice([True, False])
+
+def generate_email_data(fake, index):
+    return fake.email()
+
+def generate_category_data(fake, index):
+    return random.choice(['Category A', 'Category B', 'Category C'])
+
+def apply_business_rules(df):
+    """Apply business rules to the generated data"""
+    # Add your business rules here
+    return df
+
+if __name__ == "__main__":
+    generate_synthetic_data()
+`;
+                return new Blob([pythonScript], { type: 'text/plain' });
+                
+            } else if (fileName.endsWith('.json')) {
+                // Generate metadata JSON
+                const metadata = {
+                    project: {
+                        name: currentProject.projectName,
+                        domain: currentProject.domain,
+                        module: currentProject.module,
+                        description: currentProject.description,
+                        dataVolume: currentProject.dataVolume,
+                        timePeriod: currentProject.timePeriod,
+                        country: currentProject.country
+                    },
+                    columns: currentProject.columns,
+                    businessRules: currentProject.businessRules,
+                    generation: {
+                        timestamp: new Date().toISOString(),
+                        recordsGenerated: currentProject.dataVolume,
+                        status: 'completed'
+                    }
+                };
+                return new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json' });
+                
+            } else if (fileName === 'requirements.txt') {
+                const requirements = `pandas>=1.3.0
+numpy>=1.21.0
+faker>=18.0.0
+scikit-learn>=1.0.0
+matplotlib>=3.5.0
+seaborn>=0.11.0
+`;
+                return new Blob([requirements], { type: 'text/plain' });
+            }
+            
+            // Default fallback
+            return new Blob([`Mock file content for ${fileName}`], { type: 'text/plain' });
+        }
+
+        function resetForm() {
+            // Reset form
+            document.getElementById('dataForm').reset();
+            
+            // Reset columns to default
+            document.getElementById('columnsContainer').innerHTML = `
+                <div class="column-item">
+                    <input type="text" placeholder="Nombre de la columna" class="column-name">
+                    <select class="column-type">
+                        <option value="text">Texto</option>
+                        <option value="number">Número</option>
+                        <option value="date">Fecha</option>
+                        <option value="boolean">Booleano</option>
+                        <option value="email">Email</option>
+                        <option value="category">Categoría</option>
+                    </select>
+                    <input type="text" placeholder="Descripción/Reglas" class="column-rules">
+                    <button type="button" class="remove-column-btn" onclick="removeColumn(this)">×</button>
+                </div>
+            `;
+            
+            // Hide results and progress, show form
+            document.getElementById('resultsSection').classList.remove('active');
+            document.getElementById('progressContainer').classList.remove('active');
+            document.querySelector('#generator .card').style.display = 'block';
+            
+            // Reset progress
+            for (let i = 1; i <= 6; i++) {
+                const step = document.getElementById(`step${i}`);
+                step.classList.remove('active', 'completed');
+            }
+            document.getElementById('progressLine').style.width = '0';
+            
+            currentProject = null;
+        }
+
+        function loadHistory() {
+            const tbody = document.querySelector('#historyTable tbody');
+            tbody.innerHTML = '';
+            
+            if (projectHistory.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #64748b; padding: 3rem;">
+                            No hay proyectos en el historial. ¡Crea tu primer proyecto!
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            projectHistory.forEach(project => {
+                const row = document.createElement('tr');
+                const date = new Date(project.timestamp).toLocaleDateString('es-PE');
+                const statusClass = project.status === 'completed' ? 'status-completed' : 
+                                   project.status === 'processing' ? 'status-processing' : 'status-error';
+                const statusText = project.status === 'completed' ? 'Completado' : 
+                                  project.status === 'processing' ? 'Procesando' : 'Error';
+                
+                row.innerHTML = `
+                    <td>${project.projectName}</td>
+                    <td>${project.domain || 'No especificado'}</td>
+                    <td>${date}</td>
+                    <td>${project.dataVolume || 'N/A'}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="viewProject(${project.id})" style="padding: 0.5rem 1rem; margin-right: 0.5rem;">
+                            <i class="fas fa-eye"></i> Ver
+                        </button>
+                        ${project.status === 'completed' ? 
+                            `<button class="btn btn-secondary" onclick="editProject(${project.id})" style="padding: 0.5rem 1rem;">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>` : ''
+                        }
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function viewProject(projectId) {
+            const project = projectHistory.find(p => p.id === projectId);
+            if (!project) return;
+            
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = `
+                <h2 style="color: #667eea; margin-bottom: 2rem;"><i class="fas fa-clipboard-list"></i> ${project.projectName}</h2>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div>
+                        <strong>Dominio:</strong><br>
+                        ${project.domain || 'No especificado'}
+                    </div>
+                    <div>
+                        <strong>Módulo:</strong><br>
+                        ${project.module || 'No especificado'}
+                    </div>
+                    <div>
+                        <strong>Volumen:</strong><br>
+                        ${project.dataVolume || 'No especificado'} registros
+                    </div>
+                    <div>
+                        <strong>Período:</strong><br>
+                        ${project.timePeriod || 'No especificado'}
+                    </div>
+                </div>
+                
+                ${project.description ? `
+                    <div style="margin-bottom: 2rem;">
+                        <strong>Descripción:</strong><br>
+                        <p style="background: #f8fafc; padding: 1rem; border-radius: 8px; margin-top: 0.5rem;">
+                            ${project.description}
+                        </p>
+                    </div>
+                ` : ''}
+                
+                <div style="margin-bottom: 2rem;">
+                    <strong>Columnas definidas:</strong><br>
+                    <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; margin-top: 0.5rem;">
+                        ${project.columns.length > 0 ? 
+                            project.columns.map(col => `
+                                <div style="margin-bottom: 0.5rem;">
+                                    • <strong>${col.name}</strong> (${col.type})
+                                    ${col.rules ? ` - ${col.rules}` : ''}
+                                </div>
+                            `).join('') :
+                            'No se definieron columnas específicas'
+                        }
+                    </div>
+                </div>
+                
+                ${project.businessRules ? `
+                    <div style="margin-bottom: 2rem;">
+                        <strong>Reglas de negocio:</strong><br>
+                        <p style="background: #f8fafc; padding: 1rem; border-radius: 8px; margin-top: 0.5rem;">
+                            ${project.businessRules}
+                        </p>
+                    </div>
+                ` : ''}
+                
+                ${project.files && project.files.length > 0 ? `
+                    <div>
+                        <strong>Archivos generados:</strong><br>
+                        <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; margin-top: 0.5rem;">
+                            ${project.files.map(file => `
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #e2e8f0;">
+                                    <div>
+                                        <div style="font-weight: 600;">${file.name}</div>
+                                        <div style="font-size: 0.875rem; color: #64748b;">${file.type} - ${file.size}</div>
+                                    </div>
+                                    <button class="btn btn-secondary" onclick="downloadFile('${file.name}')" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div style="text-align: center; margin-top: 2rem;">
+                    ${project.status === 'completed' && project.files ? `
+                        <button class="btn btn-primary" onclick="downloadProject(${project.id}); closeModal();" style="margin-right: 1rem;">
+                            <i class="fas fa-download"></i> Descargar Todo
+                        </button>
+                    ` : ''}
+                    <button class="btn btn-secondary" onclick="closeModal()">
+                        Cerrar
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('viewModal').style.display = 'block';
+        }
+
+        function editProject(projectId) {
+            const project = projectHistory.find(p => p.id === projectId);
+            if (!project) return;
+            
+            // Switch to generator page
+            showPage('generator');
+            document.querySelector('.nav-tab[onclick="showPage(\'generator\')"]').click();
+            
+            // Fill form with project data
+            document.getElementById('projectName').value = project.projectName + ' (Copia)';
+            document.getElementById('domain').value = project.domain || '';
+            document.getElementById('module').value = project.module || '';
+            document.getElementById('dataVolume').value = project.dataVolume || '';
+            document.getElementById('timePeriod').value = project.timePeriod || '';
+            document.getElementById('country').value = project.country || '';
+            document.getElementById('description').value = project.description || '';
+            document.getElementById('businessRules').value = project.businessRules || '';
+            
+            // Fill columns
+            const columnsContainer = document.getElementById('columnsContainer');
+            columnsContainer.innerHTML = '';
+            
+            if (project.columns.length > 0) {
+                project.columns.forEach(column => {
+                    const columnHtml = `
+                        <div class="column-item">
+                            <input type="text" placeholder="Nombre de la columna" class="column-name" value="${column.name}">
+                            <select class="column-type">
+                                <option value="text" ${column.type === 'text' ? 'selected' : ''}>Texto</option>
+                                <option value="number" ${column.type === 'number' ? 'selected' : ''}>Número</option>
+                                <option value="date" ${column.type === 'date' ? 'selected' : ''}>Fecha</option>
+                                <option value="boolean" ${column.type === 'boolean' ? 'selected' : ''}>Booleano</option>
+                                <option value="email" ${column.type === 'email' ? 'selected' : ''}>Email</option>
+                                <option value="category" ${column.type === 'category' ? 'selected' : ''}>Categoría</option>
+                            </select>
+                            <input type="text" placeholder="Descripción/Reglas" class="column-rules" value="${column.rules || ''}">
+                            <button type="button" class="remove-column-btn" onclick="removeColumn(this)">×</button>
+                        </div>
+                    `;
+                    columnsContainer.insertAdjacentHTML('beforeend', columnHtml);
+                });
+            } else {
+                addColumn();
+            }
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        function downloadProject(projectId) {
+            const project = projectHistory.find(p => p.id === projectId);
+            if (!project || !project.files) return;
+            
+            currentProject = project;
+            downloadAll();
+        }
+
+        function closeModal() {
+            document.getElementById('viewModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('viewModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Add some sample data for demo purposes
+        if (projectHistory.length === 0) {
+            const sampleProjects = [
+                {
+                    id: 1001,
+                    projectName: "Análisis de Satisfacción Empleados",
+                    domain: "hr",
+                    module: "Encuestas de Empleados",
+                    dataVolume: "300",
+                    timePeriod: "2024-2025",
+                    country: "peru",
+                    description: "Generar datos sintéticos de encuestas de satisfacción laboral para una empresa de tecnología de tamaño medio.",
+                    businessRules: "Los empleados de ingeniería deben tener puntajes de satisfacción ligeramente más altos. Las respuestas deben correlacionarse con la tendencia de satisfacción del empleado.",
+                    columns: [
+                        { name: "employee_id", type: "number", rules: "ID único del empleado" },
+                        { name: "employee_name", type: "text", rules: "Nombres peruanos realistas" },
+                        { name: "team", type: "category", rules: "Engineering, Sales, Marketing, HR" },
+                        { name: "satisfaction_score", type: "number", rules: "Escala 1-5, promedio 3.2" },
+                        { name: "survey_date", type: "date", rules: "Fechas entre 2024-2025" }
+                    ],
+                    timestamp: new Date(Date.now() - 86400000 * 7).toISOString(), // 7 days ago
+                    status: "completed",
+                    completedAt: new Date(Date.now() - 86400000 * 7 + 3600000).toISOString(),
+                    files: [
+                        { name: "satisfaction_survey_data.csv", type: "CSV Data", size: "45 KB" },
+                        { name: "satisfaction_survey_metadata.json", type: "Metadata", size: "8 KB" },
+                        { name: "satisfaction_survey_script.py", type: "Python Script", size: "15 KB" },
+                        { name: "requirements.txt", type: "Requirements", size: "2 KB" }
+                    ]
+                },
+                {
+                    id: 1002,
+                    projectName: "Transacciones Financieras Q1",
+                    domain: "finance",
+                    module: "Análisis de Transacciones",
+                    dataVolume: "5000",
+                    timePeriod: "Q1 2024",
+                    country: "peru",
+                    description: "Datos sintéticos de transacciones financieras para análisis de patrones y detección de fraude.",
+                    businessRules: "Transacciones nocturnas tienen mayor probabilidad de ser fraudulentas. Montos altos requieren validación adicional.",
+                    columns: [
+                        { name: "transaction_id", type: "text", rules: "ID alfanumérico único" },
+                        { name: "amount", type: "number", rules: "Rango 10-10000 PEN" },
+                        { name: "timestamp", type: "date", rules: "Q1 2024, 24/7" },
+                        { name: "is_fraud", type: "boolean", rules: "5% fraude aproximadamente" },
+                        { name: "merchant_type", type: "category", rules: "Retail, Restaurant, Online, ATM" }
+                    ],
+                    timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 days ago
+                    status: "completed",
+                    completedAt: new Date(Date.now() - 86400000 * 3 + 7200000).toISOString(),
+                    files: [
+                        { name: "financial_transactions_data.csv", type: "CSV Data", size: "312 KB" },
+                        { name: "financial_transactions_additional.csv", type: "CSV Data", size: "189 KB" },
+                        { name: "financial_transactions_metadata.json", type: "Metadata", size: "12 KB" },
+                        { name: "financial_transactions_script.py", type: "Python Script", size: "22 KB" },
+                        { name: "requirements.txt", type: "Requirements", size: "2 KB" }
+                    ]
+                }
+            ];
+            
+            projectHistory = sampleProjects;
+            localStorage.setItem('projectHistory', JSON.stringify(projectHistory));
+        }
+    </script>
+</body>
+</html>
+            
